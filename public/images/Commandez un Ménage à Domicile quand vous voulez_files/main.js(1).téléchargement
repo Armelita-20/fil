@@ -1,0 +1,360 @@
+
+jQuery(function() {
+  if(jQuery('.gallery').length > 0) {
+    jQuery('.gallery--list').slick({
+      infinite: true,
+      slidesToShow: 3,
+      slidesToScroll: 3,
+      prevArrow: jQuery('.prev'),
+      nextArrow: jQuery('.next')
+    });
+
+  }
+
+  if(jQuery('.bannerSlider').length > 0) {
+    jQuery('.bannerSlider').slick({
+       infinite: true,
+       speed: 600,
+       slidesToShow: 1,
+       adaptiveHeight: true,
+       autoplay: true,
+       autoplaySpeed: 6000,
+       arrows:false,
+       dots: false
+    });
+  }
+
+  if(jQuery(document).width() < 640) {
+    jQuery('.articles').slick({
+       infinite: true,
+       slidesToShow: 1,
+       adaptiveHeight: true,
+       arrows:false,
+       dots: true
+    });
+  }
+
+jQuery('.button-collapse-left').click(function(e){
+      jQuery('.nav--mobile-right').removeClass('activate');
+      jQuery('.button-collapse-right .fa-shopping-bag').show();
+      jQuery('.button-collapse-right .fa-times').hide();
+
+      jQuery('.nav--mobile-left').toggleClass('activate');
+      if(jQuery('.nav--mobile-left').hasClass('activate')) {
+        jQuery('.button-collapse-left .fa-times').show();
+        jQuery('.button-collapse-left .fa-bars').hide();
+      } else {
+        jQuery('.button-collapse-left .fa-times').hide();
+        jQuery('.button-collapse-left .fa-bars').show();
+      }
+      e.preventDefault();
+    });
+
+    jQuery('.button-collapse-right').click(function(e){
+        jQuery('.nav--mobile-left').removeClass('activate');
+        jQuery('.button-collapse-left .fa-bars').show();
+        jQuery('.button-collapse-left .fa-times').hide();
+
+        jQuery('.nav--mobile-right').toggleClass('activate');
+        if(jQuery('.nav--mobile-right').hasClass('activate')) {
+          jQuery('.button-collapse-right .fa-times').show();
+          jQuery('.button-collapse-right .fa-shopping-bag').hide();
+        } else {
+          jQuery('.button-collapse-right .fa-times').hide();
+          jQuery('.button-collapse-right .fa-shopping-bag').show();
+        }
+        e.preventDefault();
+      });
+  // configure form
+  jQuery.validator.setDefaults({
+    debug: true,
+    success: 'valid'
+  });
+  jQuery.extend(jQuery.validator.messages, {
+    required: 'Champs requis',
+    number: 'Nombre valide requis'
+  });
+  var form1 = jQuery( '#conditionStep1' );
+  form1.validate({
+    lang: 'fr',
+    rules: {
+      phoneNumber: {
+        required: true,
+        minlength: 10
+      },
+      conditions: {
+        required: true
+      }
+    }
+  });
+  // data form 1
+  var data = {
+    user_id: 7183284,
+    pulse: {name: 'Nouveau contact'},
+    group_id: 'topics',
+    add_to_bottom: true
+  };
+
+  var pulse_id;
+  jQuery('#devenirPartenaire1').click(function(e){
+    e.preventDefault();
+    // check if valid
+    if(!form1.valid())
+    return;
+
+    jQuery.ajax({
+      url:'https://api.monday.com/v1/boards/189911056/pulses.json?api_key=0aa683db2bdd3a9e5760588af9d35be7',
+      method: 'POST',
+      data: JSON.stringify(data),
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function(response) {
+        console.log(response);
+        // change display
+        jQuery('#form-step-2').removeClass('d-none');
+        jQuery('#form-step-1').hide();
+        // PULSE ID HERE
+        pulse_id = response.pulse.id;
+          var data = {
+            pulse_id: pulse_id,
+            text: jQuery('#phoneNumber').val()
+          }
+          // UPDATE PHONE
+          console.log('data', data);
+          jQuery.ajax({
+            url:'https://api.monday.com/v1/boards/189911056/columns/text4/text.json?api_key=0aa683db2bdd3a9e5760588af9d35be7',
+            method: 'PUT',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function(response) {
+              console.log(response);
+            }
+          });
+        }
+      });
+
+
+  });
+  var form2 = jQuery( '#conditionStep2' );
+  form2.validate({
+    rules: {
+      prenom: {
+        required: true
+      },
+      email: {
+        required: true,
+        email: true
+      },
+      nom: {
+        required: true
+      },
+      secteur: {
+        required: true
+      },
+      profil: {
+        required: true
+      }
+    }
+  });
+  // validation form 2
+  jQuery('#devenirPartenaire2').click(function(){
+    if(!form2.valid())
+    return;
+
+    var dataName = {
+      pulse_id: pulse_id,
+      name: jQuery('input[name=prenom]').val() + ' ' +  jQuery('input[name=nom]').val()
+    }
+    var dataEmail = {
+      pulse_id: pulse_id,
+      text: jQuery('input[name=email]').val()
+    }
+    var dataProfil = {
+      pulse_id: pulse_id,
+      text: jQuery('select[name=profil]').val()
+    }
+    var dataSecteur = {
+      pulse_id: pulse_id,
+      text: jQuery('input[name=secteur]').val()
+    }
+    var dataDate = {
+      pulse_id: pulse_id,
+      date_str: formatDate()
+    }
+    //  Update name
+    jQuery.ajax({
+      url:'https://api.monday.com/v1/pulses/'+pulse_id+'.json?api_key=0aa683db2bdd3a9e5760588af9d35be7',
+      method: 'PUT',
+      data: JSON.stringify(dataName),
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function(){
+        console.log('name ok');
+      }
+    });
+    //  Update Email
+    jQuery.ajax({
+      url:'https://api.monday.com/v1/boards/189911056/columns/text6/text.json?api_key=0aa683db2bdd3a9e5760588af9d35be7',
+      method: 'PUT',
+      data: JSON.stringify(dataEmail),
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function(){
+        console.log('email ok');
+      }
+    });
+    //  Update Profil
+    jQuery.ajax({
+      url:'https://api.monday.com/v1/boards/189911056/columns/text5/text.json?api_key=0aa683db2bdd3a9e5760588af9d35be7',
+      method: 'PUT',
+      data: JSON.stringify(dataProfil),
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function(){
+        console.log('profil ok');
+      }
+    });
+    //  Update Secteur
+    jQuery.ajax({
+      url:'https://api.monday.com/v1/boards/189911056/columns/text07/text.json?api_key=0aa683db2bdd3a9e5760588af9d35be7',
+      method: 'PUT',
+      data: JSON.stringify(dataSecteur),
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function(){
+        console.log('secteur ok');
+      }
+    });
+    //  Update Secteur
+    jQuery.ajax({
+      url:'https://api.monday.com/v1/boards/189911056/columns/date/date.json?api_key=0aa683db2bdd3a9e5760588af9d35be7',
+      method: 'PUT',
+      data: JSON.stringify(dataDate),
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function(){
+        console.log('date ok');
+      }
+    });
+    // remove form
+    jQuery('#conditionStep2').slideUp(200, function(){
+      jQuery('#conditionStep1, #conditionStep2').remove();
+    });
+    // display result
+    jQuery('#result').removeClass('d-none');
+  });
+
+  jQuery('.scrollToTop').click(function(e) {
+    jQuery('body, html').animate({
+      scrollTop: 0
+    }, 500);
+    e.preventDefault();
+  });
+
+    // Swiper script
+    if(jQuery('.swiper-container').length > 0) {
+        var breakpoint = window.matchMedia( '(min-width:1024px)' );
+        if ( breakpoint.matches === true ) {
+            return enableSwiper();
+        } else if ( breakpoint.matches === false ) {
+            jQuery('.swiper-container').removeClass('swiper-container').addClass('swiper-container-mobile');
+            jQuery('.swiper-wrapper').removeClass('swiper-wrapper').addClass('swiper-wrapper-mobile');
+            jQuery('.swiper-slide').removeClass('swiper-slide').addClass('swiper-slide-mobile swiper-animation bounce-up');
+
+            jQuery('.swiper-container-mobile .swiper-slide-mobile .col-sm-7').removeClass('col-sm-7').addClass('col-sm-6');
+            jQuery('.swiper-container-mobile .swiper-slide-mobile .col-sm-5').removeClass('col-sm-5').addClass('col-sm-6');
+        }
+
+        var $window = jQuery(window);
+        $window.on('scroll resize', check_if_in_view);
+        $window.trigger('scroll');
+    }
+});
+
+function check_if_in_view() {
+    var $animation_elements = jQuery('.swiper-animation');
+    var $window = jQuery(window);
+
+    var window_height = $window.height();
+    var window_top_position = $window.scrollTop();
+    var window_bottom_position = (window_top_position + window_height);
+
+    jQuery.each($animation_elements, function() {
+        var $element = jQuery(this);
+        var element_height = $element.outerHeight();
+        var element_top_position = $element.offset().top;
+        var element_bottom_position = (element_top_position + element_height);
+
+        //check to see if this current container is within viewport
+        if ((element_bottom_position >= window_top_position) &&
+            (element_top_position <= window_bottom_position)) {
+            $element.addClass('in-view');
+        } else {
+            $element.removeClass('in-view');
+        }
+    });
+}
+function enableSwiper(){
+    if (jQuery('.swiper-container').length > 0){
+        var swiper = new Swiper('.swiper-container', {
+            direction: 'horizontal',
+            speed: 5000,
+            spaceBetween: 0,
+            freeMode: true,
+            mousewheel: {
+                releaseOnEdges: true,
+                sensitivity: 0.5
+            },
+            zoom: false,
+            grabCursor: false,
+            longSwipes: false,
+            roundLengths:true,
+            parallax:true,
+            keyboard: {
+                enabled: true,
+                onlyInViewport : false
+            },
+            fadeEffect: {
+                crossFade: true
+            },
+            on: {
+                init: function () {
+                    jQuery('html, body').css('height', '100%');
+                    jQuery('.swiper-slide .description blockquote')
+                        .attr('data-swiper-parallax', '-300')
+                        .attr('data-swiper-parallax-duration', '20')
+                        .attr('data-swiper-parallax-opacity', '0.5')
+                    ;
+                    jQuery('footer.footer').hide();
+                },
+                slideChange: function () {
+                    jQuery('footer.footer').fadeOut({duration: '500', queue: false});
+                },
+                reachEnd: function () {
+                    jQuery('footer.footer')
+                        .css({'position':'fixed', 'bottom':'0', 'width':'100%'})
+                        .css('opacity', 0)
+                        .slideDown('slow')
+                        .animate(
+                            { opacity: 1 },
+                            { queue: false, duration: 'slow' }
+                        );
+                }
+            }
+        });
+    }
+}
+
+
+function formatDate() {
+    var d = new Date(),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return [year, month, day].join('-');
+}
